@@ -45,11 +45,16 @@ impl Hart {
     fn execute(&mut self, inst: InstType) { 
         match inst {
             InstType::R(opcode,rd,funct3,rs1,rs2,funct7) => {
+               println!("{:?} x{}, x{}, x{}", opcode, rd, rs1, rs2);
                match opcode {
-                Rv32iR::ADD => self.op_add(rd,rs1,rs2)
+                Rv32iR::ADD => self.op_add(rd,rs1,rs2),
+                Rv32iR::SUB => self.op_sub(rd,rs1,rs2),
+                Rv32iR::XOR => self.op_xor(rd,rs1,rs2),
+                Rv32iR::AND => self.op_and(rd,rs1,rs2),
                } 
             },
             InstType::I(opcode,rd,funct3,rs1,imm) => {
+                println!("{:?} x{}, x{}, {}", opcode, rd, rs1, imm);
                 match opcode {
                     Rv32iI::ADDI => self.op_addi(rd,rs1,imm)
                 }
@@ -126,7 +131,7 @@ impl InstType {
         // isolate the opcode.
         let opcode = (inst & 0x7f) as u8;
         let rd_imm = (inst >> 7 & 0x1f) as u8;
-        let funt3 = (inst >> 12 & 0x3) as u8;
+        let funt3 = (inst >> 12 & 0x7) as u8;
         let rs1_imm = (inst >> 15 & 0x1f) as u8;
 
         match opcode {
@@ -144,10 +149,19 @@ impl InstType {
                 let rs2 = (inst >> 20 & 0x1f) as u8;
                 match ((funt3,funt7)) {
                     ((0,0)) => {
-                        // println!("ADD");
                         InstType::R(Rv32iR::ADD,rd_imm,funt3,rs1_imm,rs2,funt7)
                     },
+                    ((0x0,0x20)) => {
+                        InstType::R(Rv32iR::SUB,rd_imm,funt3,rs1_imm,rs2,funt7)
+                    },
+                    ((0x4,0)) => {
+                        InstType::R(Rv32iR::XOR,rd_imm,funt3,rs1_imm,rs2,funt7)
+                    },
+                    ((0x7,0)) => {
+                        InstType::R(Rv32iR::AND,rd_imm,funt3,rs1_imm,rs2,funt7)
+                    }
                     ((_,_)) => {
+                        // println!("Eh what, {} {} {} {} {} {}", opcode, rd_imm,funt3,rs1_imm,rs2,funt7);
                         InstType::UNK
                     }
                 }

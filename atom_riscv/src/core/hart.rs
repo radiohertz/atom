@@ -57,8 +57,12 @@ impl Hart {
                 match opcode {
                     Rv32iR::ADD => self.op_add(rd,rs1,rs2),
                     Rv32iR::SUB => self.op_sub(rd,rs1,rs2),
+                    Rv32iR::SLL => self.op_sll(rd,rs1,rs2),
                     Rv32iR::XOR => self.op_xor(rd,rs1,rs2),
+                    Rv32iR::SRL => self.op_srl(rd,rs1,rs2),
+                    Rv32iR::SLTU => self.op_sltu(rd,rs1,rs2),
                     Rv32iR::AND => self.op_and(rd,rs1,rs2),
+                    Rv32iR::OR => self.op_or(rd,rs1,rs2),
                 } 
             },
             InstType::I(opcode,rd,funct3,rs1,imm) => {
@@ -90,9 +94,11 @@ impl Hart {
     }
 
     /// Read and write to the registers using the `RWreg`
+    #[inline]
     fn reg_rw(&mut self, op: RWreg) -> Option<u64> {
         match op {
             RWreg::Read(i) => Some(*self.x.get(i as usize).unwrap()),
+            RWreg::Write(0,_) => panic!("Dont do that! cant write to x0"),
             RWreg::Write(reg,val) => {
                 *self.x.get_mut(reg as usize).unwrap() = val;
                 None
@@ -101,10 +107,12 @@ impl Hart {
     }
 
 
+    #[inline]
     pub fn read_reg(&mut self, reg: u8) -> u64 {
         self.reg_rw(RWreg::Read(reg)).unwrap()
     }
 
+    #[inline]
     pub fn write_reg(&mut self, reg: u8, val: u64) {
         assert_eq!(self.reg_rw(RWreg::Write(reg, val)), None);
     }
@@ -160,7 +168,11 @@ impl InstType {
                 let instr = match (funct3,funct7) {
                     (0,0) => Rv32iR::ADD,
                     (0x0,0x20) => Rv32iR::SUB,
+                    (0x1,0) => Rv32iR::SLL,
                     (0x4,0) => Rv32iR::XOR,
+                    (0x5,0) => Rv32iR::SRL,
+                    (0x3,0) => Rv32iR::SLTU,
+                    (0x6,0) => Rv32iR::OR,
                     (0x7,0) => Rv32iR::AND,
                     (_,_) => {
                         // println!("Eh what, {} {} {} {} {} {}", opcode, rd_imm,funt3,rs1_imm,rs2,funt7);

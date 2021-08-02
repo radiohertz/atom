@@ -10,15 +10,16 @@ fn main() {
     if p_args.len() < 2 {
         panic!("Usage: atom [filepath]")
     }
-    let filename = &p_args[1];
 
+    let filename = &p_args[1];
     let code = read(filename).unwrap();
 
-
     let timer = Instant::now();
+
     let mut hart = Hart::new(Some(code));
     hart.run();
-    println!("{:?}", timer.elapsed());
 
+    let time_taken = timer.elapsed();
     hart.debug();
+    println!("Time taken to run the prog: {:?}", time_taken);
 }

@@ -1,0 +1,6 @@
+
+[workspace]
+members = [
+	"atom_riscv",
+	"atom_riscv_emu"
+]

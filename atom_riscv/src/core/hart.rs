@@ -1,4 +1,4 @@
-pub use super::base_isa::Rv32i;
+pub use super::base_isa::{Rv32i,Rv32iI,Rv32iR};
 
 /// A RISC-V Hardware thread.
 /// Contains its own registers and program counter.
@@ -36,24 +36,26 @@ impl Hart {
         (code[idx + 3] as u32) << 24
     }
 
-    fn decode(&mut self, inst: u32) {
+    fn decode(&mut self, inst: u32) -> InstType {
         let opcode = inst & 0x3f;
-
-        match opcode {
-            0x13 => {
-                println!("ADDI")
-            },
-            0x33 => {
-                println!("ADD")
-            }
-            _ => {
-
-            }
-        }
-
+        let decoded = InstType::which(inst);
+        decoded
     }
 
-    fn execute(&mut self) { 
+    fn execute(&mut self, inst: InstType) { 
+        match inst {
+            InstType::R(opcode,rd,funct3,rs1,rs2,funct7) => {
+               match opcode {
+                Rv32iR::ADD => self.op_add(rd,rs1,rs2)
+               } 
+            },
+            InstType::I(opcode,rd,funct3,rs1,imm) => {
+                match opcode {
+                    Rv32iI::ADDI => self.op_addi(rd,rs1,imm)
+                }
+            },
+            _ => panic!("Not yet")
+        }
     }
 
     pub fn run(&mut self) {
@@ -63,9 +65,10 @@ impl Hart {
             if self.pc >= len as u64 {
                 break;
             }
-            let inst = self.fetch();
+            let encoded_inst = self.fetch();
             self.pc += 4;
-            self.decode(inst);
+            let decoded_inst = self.decode(encoded_inst);
+            self.execute(decoded_inst);
         }
 
     }
@@ -92,7 +95,7 @@ impl Hart {
 
     pub fn debug(&self) {
         for (i,v) in self.x.iter().enumerate() {
-            println!("{} - {}", i, v);
+            println!("x{} - {}", i, v);
         }
     }
 }
@@ -106,34 +109,54 @@ pub enum RWreg {
 /// Various instruction encoding types used by RISC-V.
 #[derive(Debug,PartialEq)]
 pub enum InstType {
-    R,
-    I,
+    /// The `R` instruction type.
+    /// Denoted as `R(opcode,rd,funct3,rs1,rs2,funct7)`
+    R(Rv32iR,u8,u8,u8,u8,u8),
+    /// The `I` instruction type.
+    /// Denoted as `I(opcode,rd,funct3,rs1,imm)`
+    I(Rv32iI,u8,u8,u8,u16),
     S,
-    U
+    U,
+    UNK
 }
 
 
 impl InstType {
     fn which(inst: u32) -> Self {
         // isolate the opcode.
-        let opcode = inst & 0x3f;
+        let opcode = (inst & 0x7f) as u8;
+        let rd_imm = (inst >> 7 & 0x1f) as u8;
+        let funt3 = (inst >> 12 & 0x3) as u8;
+        let rs1_imm = (inst >> 15 & 0x1f) as u8;
+
         match opcode {
-            0x13 => InstType::I,
-            0x33 => InstType::R,
+            0x13 => {
+                let imm = (inst >> 20) as u16;
+                match funt3 {
+                    0x0 => {
+                       InstType::I(Rv32iI::ADDI,rd_imm,funt3,rs1_imm,imm)
+                    }
+                    _ => InstType::UNK
+                }
+            },
+            0x33 => {
+                let funt7 = (inst >> 25) as u8;
+                let rs2 = (inst >> 20 & 0x1f) as u8;
+                match ((funt3,funt7)) {
+                    ((0,0)) => {
+                        // println!("ADD");
+                        InstType::R(Rv32iR::ADD,rd_imm,funt3,rs1_imm,rs2,funt7)
+                    },
+                    ((_,_)) => {
+                        InstType::UNK
+                    }
+                }
+            },
             _ => panic!("Should'nt come here")
         }
     }
 }
 
-
-#[derive(Debug)]
-pub struct IType {
-    pub(crate) opcode: u32,
-    pub(crate) rd: u8,
-    pub(crate) funct3: u8,
-    pub(crate) rs1: u8,
-    pub(crate) imm: u16
-}
 
 #[test]
 fn test_correct_decoded_instruction_type() {

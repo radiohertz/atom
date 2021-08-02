@@ -1,4 +1,4 @@
-use super::{hart::{Hart, RWreg}};
+use super::{hart::{Hart}};
 
 
 #[derive(Debug,PartialEq)]

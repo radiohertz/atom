@@ -19,7 +19,7 @@ impl Hart {
         Hart{
             x: [0;32],
             pc: 0x0,
-            code: code
+            code
         }
     }
 
@@ -37,9 +37,7 @@ impl Hart {
     }
 
     fn decode(&mut self, inst: u32) -> InstType {
-        let opcode = inst & 0x3f;
-        let decoded = InstType::which(inst);
-        decoded
+        InstType::which(inst)
     }
 
     fn execute(&mut self, inst: InstType) { 
@@ -131,40 +129,32 @@ impl InstType {
         // isolate the opcode.
         let opcode = (inst & 0x7f) as u8;
         let rd_imm = (inst >> 7 & 0x1f) as u8;
-        let funt3 = (inst >> 12 & 0x7) as u8;
+        let funct3 = (inst >> 12 & 0x7) as u8;
         let rs1_imm = (inst >> 15 & 0x1f) as u8;
 
         match opcode {
             0x13 => {
                 let imm = (inst >> 20) as u16;
-                match funt3 {
-                    0x0 => {
-                       InstType::I(Rv32iI::ADDI,rd_imm,funt3,rs1_imm,imm)
-                    }
-                    _ => InstType::UNK
-                }
+                let instr = match funct3 {
+                    0x0 => Rv32iI::ADDI,
+                    _ => panic!("Unimpl imm instr")
+                };
+                InstType::I(instr,rd_imm,funct3,rs1_imm,imm)
             },
             0x33 => {
-                let funt7 = (inst >> 25) as u8;
+                let funct7 = (inst >> 25) as u8;
                 let rs2 = (inst >> 20 & 0x1f) as u8;
-                match ((funt3,funt7)) {
-                    ((0,0)) => {
-                        InstType::R(Rv32iR::ADD,rd_imm,funt3,rs1_imm,rs2,funt7)
-                    },
-                    ((0x0,0x20)) => {
-                        InstType::R(Rv32iR::SUB,rd_imm,funt3,rs1_imm,rs2,funt7)
-                    },
-                    ((0x4,0)) => {
-                        InstType::R(Rv32iR::XOR,rd_imm,funt3,rs1_imm,rs2,funt7)
-                    },
-                    ((0x7,0)) => {
-                        InstType::R(Rv32iR::AND,rd_imm,funt3,rs1_imm,rs2,funt7)
-                    }
-                    ((_,_)) => {
+                let instr = match (funct3,funct7) {
+                    (0,0) => Rv32iR::ADD,
+                    (0x0,0x20) => Rv32iR::SUB,
+                    (0x4,0) => Rv32iR::XOR,
+                    (0x7,0) => Rv32iR::AND,
+                    (_,_) => {
                         // println!("Eh what, {} {} {} {} {} {}", opcode, rd_imm,funt3,rs1_imm,rs2,funt7);
-                        InstType::UNK
+                        panic!("Unimpl R instr");
                     }
-                }
+                };
+                InstType::R(instr,rd_imm,funct3,rs1_imm,rs2,funct7)
             },
             _ => panic!("Should'nt come here")
         }

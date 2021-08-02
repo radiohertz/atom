@@ -1,5 +1,5 @@
 
-use atom_riscv::{VERSION,core::{hart::{Hart}}};
+use atom_riscv::{core::{hart::{Hart}}};
 use std::env::{args};
 use std::fs::{read};
 

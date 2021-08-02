@@ -1,6 +1,7 @@
 
 use atom_riscv::{core::{hart::{Hart}}};
 use std::env::{args};
+use std::time::Instant;
 use std::fs::{read};
 
 fn main() {
@@ -12,7 +13,12 @@ fn main() {
     let filename = &p_args[1];
 
     let code = read(filename).unwrap();
+
+
+    let timer = Instant::now();
     let mut hart = Hart::new(Some(code));
     hart.run();
+    println!("{:?}", timer.elapsed());
+
     hart.debug();
 }

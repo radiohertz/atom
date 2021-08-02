@@ -11,6 +11,14 @@ pub struct Hart {
     code: Option<Vec<u8>>
 }
 
+macro_rules! disassemble {
+    ($block: block) => (
+        if cfg!(feature = "disasm") {
+            $block;
+        }
+    )
+}
+
 
 impl Hart {
     /// Create a new hart (hardware thread).
@@ -43,16 +51,21 @@ impl Hart {
     fn execute(&mut self, inst: InstType) { 
         match inst {
             InstType::R(opcode,rd,funct3,rs1,rs2,funct7) => {
-               println!("{:?} x{}, x{}, x{}", opcode, rd, rs1, rs2);
-               match opcode {
-                Rv32iR::ADD => self.op_add(rd,rs1,rs2),
-                Rv32iR::SUB => self.op_sub(rd,rs1,rs2),
-                Rv32iR::XOR => self.op_xor(rd,rs1,rs2),
-                Rv32iR::AND => self.op_and(rd,rs1,rs2),
-               } 
+                disassemble!({
+                    println!("{:?} x{}, x{}, x{}", opcode, rd, rs1, rs2);
+                });
+                match opcode {
+                    Rv32iR::ADD => self.op_add(rd,rs1,rs2),
+                    Rv32iR::SUB => self.op_sub(rd,rs1,rs2),
+                    Rv32iR::XOR => self.op_xor(rd,rs1,rs2),
+                    Rv32iR::AND => self.op_and(rd,rs1,rs2),
+                } 
             },
             InstType::I(opcode,rd,funct3,rs1,imm) => {
-                println!("{:?} x{}, x{}, {}", opcode, rd, rs1, imm);
+                disassemble!({
+                    println!("{:?} x{}, x{}, {}", opcode, rd, rs1, imm);
+                });
+
                 match opcode {
                     Rv32iI::ADDI => self.op_addi(rd,rs1,imm)
                 }

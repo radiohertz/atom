@@ -15,6 +15,7 @@ macro_rules! disassemble {
     ($block: block) => (
         if cfg!(feature = "disasm") {
             $block;
+            // return;
         }
     )
 }
@@ -188,15 +189,15 @@ impl InstType {
 
 
 #[test]
-fn test_correct_decoded_instruction_type() {
-    assert_eq!(InstType::which(0x13), InstType::I);
-    assert_eq!(InstType::which(0x33), InstType::R);
-}
-
-#[test]
 #[should_panic]
 fn test_register_write_to_none() {
     let mut hart = Hart::new(None);
     hart.reg_rw(RWreg::Write(32,0x1337));
 }
 
+#[test]
+#[should_panic]
+fn test_register_write_to_x9() {
+    let mut hart = Hart::new(None);
+    hart.reg_rw(RWreg::Write(0,0x1));
+}

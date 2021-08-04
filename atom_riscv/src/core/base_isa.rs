@@ -55,7 +55,7 @@ pub trait Rv32i {
 
 }
 
-/// Macro that returns tuple by reading from a register.
+/// Macro that returns tuple by reading from registers.
 macro_rules! read_regs {
     ($s: ident, $rs1: ident, $rs2: ident) => {
         ($s.read_reg($rs1), $s.read_reg($rs2))

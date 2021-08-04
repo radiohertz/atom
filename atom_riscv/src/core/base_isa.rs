@@ -53,9 +53,14 @@ pub trait Rv32i {
     /// The `and` instruction of type `R`.
     fn op_and(&mut self, rd: u8, rs1: u8, rs2: u8);
 
- 
 }
 
+/// Macro that returns tuple by reading from a register.
+macro_rules! read_regs {
+    ($s: ident, $rs1: ident, $rs2: ident) => {
+        ($s.read_reg($rs1), $s.read_reg($rs2))
+    }
+}
 
 impl Rv32i for Hart {
 
@@ -65,26 +70,24 @@ impl Rv32i for Hart {
     }
 
     fn op_add(&mut self, rd: u8, rs1: u8, rs2: u8) {
-        let v1 = self.read_reg(rs1);
-        let v2 = self.read_reg(rs2);
+        // let v1 = self.read_reg(rs1);
+        // let v2 = self.read_reg(rs2);
+        let (v1, v2) = read_regs!(self,rs1,rs2);
         self.write_reg(rd, v1 + v2);
     }
 
     fn op_sub(&mut self, rd: u8, rs1: u8, rs2: u8) {
-        let v1 = self.read_reg(rs1);
-        let v2 = self.read_reg(rs2);
+        let (v1, v2) = read_regs!(self,rs1,rs2);
         self.write_reg(rd, v1 - v2);
     }
 
     fn op_sll(&mut self, rd: u8, rs1: u8, rs2: u8) {
-        let v1 = self.read_reg(rs1);
-        let v2 = self.read_reg(rs2) & 0x1f;
+        let (v1, v2) = read_regs!(self,rs1,rs2);
         self.write_reg(rd, v1 << v2);
     }
 
     fn op_sltu(&mut self, rd: u8, rs1: u8, rs2: u8) {
-        let v1 = self.read_reg(rs1);
-        let v2 = self.read_reg(rs2);
+        let (v1, v2) = read_regs!(self,rs1,rs2);
         let v = if v1 < v2 {
             1
         } else {
@@ -95,20 +98,17 @@ impl Rv32i for Hart {
     }
 
     fn op_xor(&mut self, rd: u8, rs1: u8, rs2: u8) {
-        let v1 = self.read_reg(rs1);
-        let v2 = self.read_reg(rs2);
+        let (v1, v2) = read_regs!(self,rs1,rs2);
         self.write_reg(rd, v1 ^ v2);
     }
 
     fn op_srl(&mut self, rd: u8, rs1: u8, rs2: u8) {
-        let v1 = self.read_reg(rs1);
-        let v2 = self.read_reg(rs2) | 0x1f;
+        let (v1, v2) = read_regs!(self,rs1,rs2);
         self.write_reg(rd, v1 >> v2);
     }
 
     fn op_or(&mut self, rd: u8, rs1: u8, rs2: u8) {
-        let v1 = self.read_reg(rs1);
-        let v2 = self.read_reg(rs2);
+        let (v1, v2) = read_regs!(self,rs1,rs2);
         self.write_reg(rd, v1 | v2);
     }
 
@@ -117,8 +117,7 @@ impl Rv32i for Hart {
     }
 
     fn op_and(&mut self, rd: u8, rs1: u8, rs2: u8) {
-        let v1 = self.read_reg(rs1);
-        let v2 = self.read_reg(rs2);
+        let (v1, v2) = read_regs!(self,rs1,rs2);
         self.write_reg(rd, v1 & v2);
     }
 

@@ -99,7 +99,7 @@ impl Hart {
     fn reg_rw(&mut self, op: RWreg) -> Option<u64> {
         match op {
             RWreg::Read(i) => Some(*self.x.get(i as usize).unwrap()),
-            RWreg::Write(0,_) => panic!("Dont do that! cant write to x0"),
+            RWreg::Write(0,_) => None,
             RWreg::Write(reg,val) => {
                 *self.x.get_mut(reg as usize).unwrap() = val;
                 None
@@ -196,8 +196,7 @@ fn test_register_write_to_none() {
 }
 
 #[test]
-#[should_panic]
-fn test_register_write_to_x9() {
+fn test_register_write_to_x0() {
     let mut hart = Hart::new(None);
-    hart.reg_rw(RWreg::Write(0,0x1));
+    assert_eq!(hart.reg_rw(RWreg::Write(0,0x1)), None);
 }
